@@ -1,4 +1,3 @@
-
 import json
 import os
 from datetime import datetime
@@ -8,7 +7,7 @@ from typing import Any, Dict
 from scrapy import signals
 from scrapy.exceptions import DropItem
 
-from config import get_config
+from ..config import get_config
 
 
 class JsonPipeline:
@@ -30,6 +29,9 @@ class JsonPipeline:
         # Contador de itens processados
         self.item_count = 0
 
+        # Lista para armazenar itens
+        self.items = []
+
     @classmethod
     def from_crawler(cls, crawler):
         """Método de classe para criar instância do pipeline."""
@@ -50,6 +52,14 @@ class JsonPipeline:
             f"Pipeline JSON finalizado. Total de itens processados: {self.item_count}"
         )
 
+        # Salvar todos os itens em arquivo JSON
+        if self.items:
+            filename = self._get_output_filename()
+            self._save_to_json(self.items, filename)
+            spider.logger.info(f"✅ Arquivo JSON salvo: {filename}")
+        else:
+            spider.logger.warning("⚠️ Nenhum item para salvar")
+
     def process_item(self, item: Any, spider) -> Any:
         """
         Processa cada item extraído.
@@ -66,6 +76,9 @@ class JsonPipeline:
             if not self._is_valid_item(item):
                 spider.logger.warning(f"Item inválido ignorado: {item}")
                 raise DropItem("Item inválido")
+
+            # Adicionar item à lista
+            self.items.append(item)
 
             # Incrementar contador
             self.item_count += 1
