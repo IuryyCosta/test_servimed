@@ -129,14 +129,3 @@ docker-compose==1.29.2
 # # Monitoramento avançado
 # sentry-sdk==1.38.0
 
-# =============================================================================
-# NOTAS IMPORTANTES
-# =============================================================================
-# 
-# 1. INSTALAÇÃO: pip install -r requirements.txt
-# 2. AMBIENTE VIRTUAL: python -m venv venv && source venv/bin/activate
-# 3. ATUALIZAÇÃO: pip install -r requirements.txt --upgrade
-# 4. DESENVOLVIMENTO: pip install -r requirements-dev.txt (se existir)
-# 
-# =============================================================================
-
