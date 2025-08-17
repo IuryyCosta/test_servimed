@@ -21,6 +21,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from servimed.config import get_config
 
 
+
 def get_credentials_from_env() -> Dict[str, str]:
     """Obtém credenciais das variáveis de ambiente."""
 
@@ -31,8 +32,8 @@ def get_credentials_from_env() -> Dict[str, str]:
         print("Configuração carregada com sucesso")
 
         return {
-            "usuario": config.api.username,
-            "senha": config.api.password,
+            "usuario": config.servimed_credentials["username"],
+            "senha": config.servimed_credentials["password"],
             "callback_url": config.api.base_url,
         }
 
