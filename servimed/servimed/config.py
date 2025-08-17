@@ -3,9 +3,6 @@ Configurações do Projeto Servimed - Desafio Técnico
 
 Este módulo centraliza todas as configurações do projeto, carregando
 variáveis de ambiente e validando configurações obrigatórias.
-
-Author: Desenvolvedor
-Date: 2024
 """
 
 import os
@@ -29,7 +26,8 @@ class ConfigurationError(Exception):
 @dataclass
 class OAuth2Config:
     """Configurações OAuth2 para autenticação na API."""
-
+    username: str
+    password: str
     client_id: str
     client_secret: str
     grant_type: str
@@ -39,6 +37,8 @@ class OAuth2Config:
     def from_env(cls) -> "OAuth2Config":
         """Cria instância a partir de variáveis de ambiente."""
         return cls(
+            username=os.getenv("SERVIMED_USERNAME", "string"),
+            password=os.getenv("SERVIMED_PASSWORD", "********"),
             client_id=os.getenv("OAUTH2_CLIENT_ID", "string"),
             client_secret=os.getenv("OAUTH2_CLIENT_SECRET", "********"),
             grant_type=os.getenv("OAUTH2_GRANT_TYPE", "password"),
@@ -168,8 +168,8 @@ class Config:
     def _load_environment(self) -> None:
         """Carrega variáveis de ambiente do arquivo .env."""
         try:
-            # Tentar carregar do arquivo .env
-            env_path = Path(".env")
+            # Tentar carregar do arquivo .env na raiz do projeto
+            env_path = Path(__file__).parent.parent / ".env"
             if env_path.exists():
                 load_dotenv(env_path)
                 logger.info("Arquivo .env carregado com sucesso")

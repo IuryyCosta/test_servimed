@@ -1,13 +1,10 @@
 """
 Configuração do Celery para o projeto Servimed - Fase 2.
-
-Este módulo configura o broker Redis e as configurações
-básicas do Celery para processamento assíncrono.
 """
 
 import os
 from celery import Celery
-from ..config import get_config
+from servimed.config import get_config
 
 # Configurações do Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -43,10 +40,11 @@ CELERY_SECURITY_KEY = os.getenv("CELERY_SECURITY_KEY", "servimed-secret-key")
 CELERY_SECURITY_CERTIFICATE = os.getenv("CELERY_SECURITY_CERTIFICATE", None)
 CELERY_SECURITY_CERTIFICATE_KEY = os.getenv("CELERY_SECURITY_CERTIFICATE_KEY", None)
 
+
 def create_celery_app():
     """
     Cria e configura a aplicação Celery.
-    
+
     Returns:
         Celery: Aplicação Celery configurada
     """
@@ -54,9 +52,9 @@ def create_celery_app():
         "servimed",
         broker=CELERY_BROKER_URL,
         backend=CELERY_RESULT_BACKEND,
-        include=["servimed.tasks.scraping_tasks"]
+        include=["tasks.scraping_tasks"],
     )
-    
+
     # Aplicar configurações
     app.conf.update(
         task_serializer=CELERY_TASK_SERIALIZER,
@@ -78,8 +76,9 @@ def create_celery_app():
         security_certificate=CELERY_SECURITY_CERTIFICATE,
         security_certificate_key=CELERY_SECURITY_CERTIFICATE_KEY,
     )
-    
+
     return app
+
 
 # Instância global do Celery
 celery_app = create_celery_app()

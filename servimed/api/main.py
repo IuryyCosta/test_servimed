@@ -12,13 +12,13 @@ from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from ..models.scraping_task import (
+from models.scraping_task import (
     ScrapingTaskRequest,
     ScrapingTaskResponse,
     ScrapingTaskStatus,
 )
-from ..tasks.scraping_tasks import execute_scraping
-from ..queues.celery_config import celery_app
+from tasks.scraping_tasks import execute_scraping
+from queues.celery_config import celery_app
 
 
 # Configuração da API
@@ -54,7 +54,7 @@ async def create_scraping_task(request: ScrapingTaskRequest):
         # Enviar tarefa para processamento assíncrono
         celery_task = execute_scraping.delay(task_data)
 
-        # Usar o ID real do Celery para rastreamento
+        # Usar o ID do Celery para rastreamento
         celery_task_id = celery_task.id
 
         # Criar resposta

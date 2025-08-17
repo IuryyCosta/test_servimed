@@ -11,115 +11,18 @@ import requests
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from ..queues.celery_config import celery_app
-from ..models.scraping_task import ScrapingResult
-from ..servimed.config import get_config
+from queues.celery_config import celery_app
+from models.scraping_task import ScrapingResult
+from servimed.config import get_config
 
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(bind=True, name="servimed.scraping_tasks.execute_scraping")
-def execute_scraping(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Tarefa principal para executar scraping de produtos.
+class ScrapingTaskError(Exception):
+    """Erro genérico durante a execução da task de scraping."""
 
-    Args:
-        task_data: Dados da tarefa (usuário, senha, callback_url)
-
-    Returns:
-        Dict com resultado da execução
-    """
-    task_id = self.request.id
-    start_time = time.time()
-
-    try:
-        logger.info(f"Iniciando tarefa de scraping: {task_id}")
-
-        # Atualizar status para processing
-        self.update_state(
-            state="PROGRESS",
-            meta={
-                "status": "processing",
-                "progress": 0.1,
-                "message": "Iniciando autenticação OAuth2",
-            },
-        )
-
-        # 1. Autenticação OAuth2
-        logger.info("Realizando autenticação OAuth2...")
-        auth_token = _authenticate_oauth2(
-            username=task_data["usuario"], password=task_data["senha"]
-        )
-
-        if not auth_token:
-            raise Exception("Falha na autenticação OAuth2")
-
-        # Atualizar progresso
-        self.update_state(
-            state="PROGRESS",
-            meta={
-                "status": "processing",
-                "progress": 0.3,
-                "message": "Autenticação realizada, extraindo produtos",
-            },
-        )
-
-        # 2. Extrair produtos
-        logger.info("Extraindo produtos da API...")
-        products = _extract_products(auth_token)
-
-        if not products:
-            raise Exception("Nenhum produto extraído")
-
-        # Atualizar progresso
-        self.update_state(
-            state="PROGRESS",
-            meta={
-                "status": "processing",
-                "progress": 0.7,
-                "message": f"Produtos extraídos ({len(products)}), enviando para callback",
-            },
-        )
-
-        # 3. Enviar para API de callback
-        logger.info("Enviando dados para API de callback...")
-        callback_response = _send_to_callback(
-            callback_url=task_data["callback_url"],
-            products=products,
-            auth_token=auth_token,
-        )
-
-        # Calcular tempo total
-        extraction_time = time.time() - start_time
-
-        # 4. Criar resultado
-        result = ScrapingResult(
-            task_id=task_id,
-            total_products=len(products),
-            products=products,
-            extraction_time=extraction_time,
-            callback_sent=True,
-            callback_response=callback_response,
-        )
-
-        logger.info(f"Tarefa concluída com sucesso: {task_id}")
-        logger.info(f"Total de produtos: {len(products)}")
-        logger.info(f"Tempo de execução: {extraction_time:.2f}s")
-
-        return result.dict()
-
-    except Exception as e:
-        error_msg = f"Erro na tarefa de scraping: {str(e)}"
-        logger.error(error_msg)
-
-        # Atualizar status para failed
-        self.update_state(
-            state="FAILURE",
-            meta={"status": "failed", "error": error_msg, "progress": 0.0},
-        )
-
-        raise Exception(error_msg)
+    pass
 
 
 def _authenticate_oauth2(username: str, password: str) -> Optional[str]:
@@ -171,6 +74,45 @@ def _authenticate_oauth2(username: str, password: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Erro durante autenticação: {e}")
         return None
+
+
+def _create_user_signup(username: str, password: str) -> bool:
+    """Cria usuário na API de callback ."""
+    try:
+        config = get_config()
+
+        # Dados para signup
+        signup_data = {"username": username, "password": password}
+
+        # Headers
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        # URL de signup
+        signup_url = f"{config.api.base_url}{config.api.signup_endpoint}"
+
+        logger.info(f"Tentando criar usuário em: {signup_url}")
+
+        # Requisição POST
+        response = requests.post(
+            url=signup_url, json=signup_data, headers=headers, timeout=30
+        )
+
+        # Se usuário criado OU já existe, considerar sucesso
+        if response.status_code in [200, 201] or (
+            response.status_code == 400 and "Usuário já registrado" in response.text
+        ):
+            logger.info("Usuário disponível para autenticação")
+            return True
+        else:
+            logger.warning(f"Signup não concluído: Status {response.status_code}")
+            return False
+
+    except Exception as e:
+        logger.error(f"Erro no signup: {e}")
+        return False
 
 
 def _extract_products(auth_token: str) -> list:
@@ -257,6 +199,81 @@ def _send_to_callback(
     except Exception as e:
         logger.error(f"Erro ao enviar para callback: {e}")
         return {"status": "error", "error": str(e)}
+
+
+@celery_app.task(bind=True, name="servimed.scraping_tasks.execute_scraping")
+def execute_scraping(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Tarefa principal para executar scraping de produtos.
+
+    Args:
+        task_data: Dados da tarefa (usuário, senha, callback_url)
+
+    Returns:
+        Dict com resultado da execução
+    """
+    task_id = self.request.id
+    start_time = time.time()
+
+    try:
+        logger.info(f"Iniciando tarefa de scraping: {task_id}")
+
+        # 1. Criar usuário na API (signup)
+        logger.info("Tentando criar usuário na API...")
+        signup_success = _create_user_signup(
+            username=task_data["usuario"], password=task_data["senha"]
+        )
+
+        if not signup_success:
+            logger.warning("Signup não concluído, mas continuando com autenticação...")
+
+        # 2. Autenticação OAuth2
+        logger.info("Realizando autenticação OAuth2...")
+        auth_token = _authenticate_oauth2(
+            username=task_data["usuario"], password=task_data["senha"]
+        )
+
+        if not auth_token:
+            raise ScrapingTaskError("Falha na autenticação OAuth2")
+
+        # 3. Extrair produtos
+        logger.info("Extraindo produtos da API...")
+        products = _extract_products(auth_token)
+
+        if not products:
+            raise ScrapingTaskError("Nenhum produto extraído")
+
+        # 4. Enviar para API de callback
+        logger.info("Enviando dados para API de callback...")
+        callback_response = _send_to_callback(
+            callback_url=task_data["callback_url"],
+            products=products,
+            auth_token=auth_token,
+        )
+
+        # Calcular tempo total
+        extraction_time = time.time() - start_time
+
+        # 4. Criar resultado
+        result = ScrapingResult(
+            task_id=task_id,
+            total_products=len(products),
+            products=products,
+            extraction_time=extraction_time,
+            callback_sent=True,
+            callback_response=callback_response,
+        )
+
+        logger.info(f"Tarefa concluída com sucesso: {task_id}")
+        logger.info(f"Total de produtos: {len(products)}")
+        logger.info(f"Tempo de execução: {extraction_time:.2f}s")
+
+        return result.dict()
+
+    except Exception as e:
+        error_msg = f"Erro na tarefa de scraping: {str(e)}"
+        logger.error(error_msg)
+        raise ScrapingTaskError(error_msg)
 
 
 @celery_app.task(name="servimed.scraping_tasks.test_task")

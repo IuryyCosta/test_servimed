@@ -19,6 +19,22 @@ python-dotenv==1.0.0
 requests==2.31.0
 
 # =============================================================================
+# DEPENDÊNCIAS FASE 2 - SISTEMA ASSÍNCRONO
+# =============================================================================
+
+# Framework para workers assíncronos
+celery==5.3.4
+
+# Framework web moderno para API
+fastapi==0.104.1
+
+# Servidor ASGI para FastAPI
+uvicorn[standard]==0.24.0
+
+# Validação de dados para FastAPI
+pydantic==2.5.0
+
+# =============================================================================
 # DEPENDÊNCIAS DE AUTENTICAÇÃO E SEGURANÇA
 # =============================================================================
 
