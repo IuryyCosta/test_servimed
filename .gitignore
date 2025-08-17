@@ -289,3 +289,6 @@ tramp
 # Arquivos de configuração local
 local_config.py
 local_settings.py
+
+# Documentação do projeto
+RESUMO_PROJETO.md

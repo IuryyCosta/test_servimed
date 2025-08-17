@@ -11,13 +11,15 @@ from datetime import datetime
 
 from servimed.models.order import OrderRequest, OrderResponse, Order
 from servimed.config import get_config
+from celery_app import celery_app
 
 # Configurar logging
 logger = logging.getLogger(__name__)
 config = get_config()
 
 
-def execute_order(task_data: Dict[str, Any]) -> Dict[str, Any]:
+@celery_app.task(bind=True, name="servimed.order_tasks.execute_order")
+def execute_order(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Executa tarefa de processamento de pedido.
 
@@ -28,7 +30,10 @@ def execute_order(task_data: Dict[str, Any]) -> Dict[str, Any]:
         Dicionário com resultado do processamento
     """
     try:
-        logger.info(f"Iniciando processamento de pedido: {task_data.get('id_pedido')}")
+        task_id = self.request.id
+        logger.info(
+            f"Iniciando processamento de pedido: {task_data.get('id_pedido')} - Task ID: {task_id}"
+        )
 
         # Extrair dados da tarefa
         usuario = task_data.get("usuario")
@@ -76,7 +81,7 @@ def execute_order(task_data: Dict[str, Any]) -> Dict[str, Any]:
 
         # Resultado final
         result = {
-            "task_id": task_data.get("task_id"),
+            "task_id": task_id,
             "id_pedido": id_pedido,
             "status": "completed",
             "challenge_order_id": challenge_order["id"],
@@ -92,7 +97,7 @@ def execute_order(task_data: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Erro ao processar pedido: {str(e)}")
         return {
-            "task_id": task_data.get("task_id"),
+            "task_id": getattr(self, "request", {}).get("id", "unknown"),
             "id_pedido": task_data.get("id_pedido"),
             "status": "failed",
             "error": str(e),
@@ -221,7 +226,7 @@ def create_challenge_order(produtos: List[Dict[str, Any]]) -> Dict[str, Any]:
         }
 
         # URL da API do desafio
-        api_url = "https://desafio.cotefal.net/pedido"
+        api_url = "https://desafio.cotefacil.net"
 
         # Headers (seria necessário token de autenticação em produção)
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -281,7 +286,7 @@ def update_challenge_order(order_id: int, order_result: Dict[str, Any]) -> bool:
         update_data = {"status": "processado", "codigo_fornecedor": "SERVIDMED_001"}
 
         # URL da API do desafio
-        api_url = f"https://desafio.cotefal.net/pedido/{order_id}"
+        api_url = f"https://desafio.cotefacil.net/pedido/{order_id}"
 
         # Headers
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -338,14 +343,4 @@ def send_callback(callback_url: str, confirmation_data: Dict[str, Any]) -> bool:
 
 
 # Tarefa Celery para processamento assíncrono
-def execute_order_task(task_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper da tarefa para Celery.
-
-    Args:
-        task_data: Dados da tarefa
-
-    Returns:
-        Resultado do processamento
-    """
-    return execute_order(task_data)
+# A função execute_order já está decorada com @celery_app.task

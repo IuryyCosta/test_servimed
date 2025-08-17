@@ -12,15 +12,15 @@ from typing import Dict, Any, Union
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from servimed.models.scraping_task import (
+from models.scraping_task import (
     ScrapingTaskRequest,
     ScrapingTaskResponse,
     ScrapingTaskStatus,
 )
-from servimed.models.order import OrderRequest, OrderStatus
-from servimed.tasks.scraping_tasks import execute_scraping
-from servimed.tasks.order_tasks import execute_order
-from servimed.queues.celery_config import celery_app
+from models.order import OrderRequest, OrderStatus
+from tasks.scraping_tasks import execute_scraping
+from tasks.order_tasks import execute_order
+from celery_app import celery_app
 
 
 # Configuração da API

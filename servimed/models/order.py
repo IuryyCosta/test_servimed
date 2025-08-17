@@ -98,39 +98,32 @@ class OrderStatus(BaseModel):
     status: str = Field(
         ..., description="Status atual: pending, processing, completed, failed"
     )
-    progress: float = Field(0.0, ge=0.0, le=1.0, description="Progresso de 0 a 1")
-    message: str = Field(..., description="Mensagem descritiva do status")
-    created_at: datetime = Field(
-        default_factory=datetime.now, description="Data de criação"
-    )
-    started_at: Optional[datetime] = Field(
-        None, description="Data de início do processamento"
-    )
-    completed_at: Optional[datetime] = Field(None, description="Data de conclusão")
-    error: Optional[str] = Field(None, description="Mensagem de erro se houver")
-    result: Optional[OrderResponse] = Field(
-        None, description="Resultado do processamento"
-    )
+    progress: Optional[float] = Field(None, description="Progresso da tarefa (0.0 a 1.0)")
+    message: str = Field(..., description="Mensagem de status atual")
+    created_at: datetime = Field(..., description="Timestamp de criação")
+    started_at: Optional[datetime] = Field(None, description="Timestamp de início")
+    completed_at: Optional[datetime] = Field(None, description="Timestamp de conclusão")
+    error: Optional[str] = Field(None, description="Mensagem de erro (se houver)")
+    result: Optional[dict] = Field(None, description="Resultado da tarefa (se concluída)")
+
+    @validator("progress")
+    def validate_progress(cls, v):
+        """Valida progresso entre 0.0 e 1.0."""
+        if v is not None and (v < 0.0 or v > 1.0):
+            raise ValueError("Progresso deve estar entre 0.0 e 1.0")
+        return v
 
     class Config:
         schema_extra = {
             "example": {
-                "task_id": "e6a0e772-78fc-4ed9-96ba-4b6019b3e532",
-                "status": "completed",
-                "progress": 1.0,
-                "message": "Pedido processado com sucesso",
-                "created_at": "2025-08-17T08:24:41.752164",
+                "task_id": "uuid-1234",
+                "status": "pending",
+                "progress": 0.0,
+                "message": "Tarefa criada com sucesso",
+                "created_at": "2025-08-17T10:00:00",
                 "started_at": None,
                 "completed_at": None,
                 "error": None,
-                "result": {
-                    "codigo_confirmacao": "ABC987",
-                    "status": "pedido_realizado",
-                },
+                "result": None,
             }
         }
-
-
-# Aliases para compatibilidade
-OrderItem = ProductItem
-OrderConfirmation = OrderResponse

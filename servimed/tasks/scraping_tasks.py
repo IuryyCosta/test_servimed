@@ -19,12 +19,6 @@ from servimed.config import get_config
 logger = logging.getLogger(__name__)
 
 
-class ScrapingTaskError(Exception):
-    """Erro genérico durante a execução da task de scraping."""
-
-    pass
-
-
 def _authenticate_oauth2(username: str, password: str) -> Optional[str]:
     """Realiza autenticação OAuth2 com a API de callback."""
     try:
@@ -234,14 +228,14 @@ def execute_scraping(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
         )
 
         if not auth_token:
-            raise ScrapingTaskError("Falha na autenticação OAuth2")
+            raise ValueError("Falha na autenticação OAuth2")
 
         # 3. Extrair produtos
         logger.info("Extraindo produtos da API...")
         products = _extract_products(auth_token)
 
         if not products:
-            raise ScrapingTaskError("Nenhum produto extraído")
+            raise ValueError("Nenhum produto extraído")
 
         # 4. Enviar para API de callback
         logger.info("Enviando dados para API de callback...")
@@ -273,7 +267,7 @@ def execute_scraping(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         error_msg = f"Erro na tarefa de scraping: {str(e)}"
         logger.error(error_msg)
-        raise ScrapingTaskError(error_msg)
+        raise ValueError(error_msg)
 
 
 @celery_app.task(name="servimed.scraping_tasks.test_task")
