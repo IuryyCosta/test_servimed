@@ -292,3 +292,6 @@ local_settings.py
 
 # Documentação do projeto
 RESUMO_PROJETO.md
+
+# Preparação para entrevista (não commitar)
+ENTREVISTA_PREPARACAO.md
