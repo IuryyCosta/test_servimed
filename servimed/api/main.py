@@ -1,41 +1,47 @@
 """
-API FastAPI para gerenciamento de tarefas de scraping - Fase 2.
+API FastAPI para gerenciamento de tarefas de scraping e pedidos - Fases 2 e 3.
 
-Esta API recebe requisições de scraping e as envia para processamento
-assíncrono via Celery workers.
+Esta API recebe requisições de scraping e pedidos, enviando-as para processamento
+assíncrono via Celery workers com detecção automática do tipo de tarefa.
 """
 
 import uuid
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from models.scraping_task import (
+from servimed.models.scraping_task import (
     ScrapingTaskRequest,
     ScrapingTaskResponse,
     ScrapingTaskStatus,
 )
-from tasks.scraping_tasks import execute_scraping
-from queues.celery_config import celery_app
+from servimed.models.order import OrderRequest, OrderStatus
+from servimed.tasks.scraping_tasks import execute_scraping
+from servimed.tasks.order_tasks import execute_order
+from servimed.queues.celery_config import celery_app
 
 
 # Configuração da API
 app = FastAPI(
-    title="Servimed Scraping API",
-    description="API para gerenciamento de tarefas de scraping assíncrono",
-    version="1.0.0",
+    title="Servimed Scraping & Orders API",
+    description="API para gerenciamento de tarefas de scraping e pedidos assíncrono",
+    version="2.0.0",
 )
 
 
 @app.post("/scraping", response_model=ScrapingTaskResponse)
-async def create_scraping_task(request: ScrapingTaskRequest):
+async def create_task(request: Union[ScrapingTaskRequest, OrderRequest]):
     """
-    Cria uma nova tarefa de scraping.
+    Cria uma nova tarefa de scraping ou pedido.
+
+    Detecta automaticamente o tipo de tarefa baseado nos dados recebidos:
+    - Se contém 'produtos': Tarefa de pedido (Fase 3)
+    - Se não contém 'produtos': Tarefa de scraping (Fase 2)
 
     Args:
-        request: Dados da tarefa (usuário, senha, callback_url)
+        request: Dados da tarefa (ScrapingTaskRequest ou OrderRequest)
 
     Returns:
         Resposta com ID da tarefa criada
@@ -44,34 +50,69 @@ async def create_scraping_task(request: ScrapingTaskRequest):
         # Gerar ID único para a tarefa
         task_id = str(uuid.uuid4())
 
-        # Preparar dados para o Celery
-        task_data = {
-            "usuario": request.usuario,
-            "senha": request.senha,
-            "callback_url": request.callback_url,
-        }
+        # Detectar tipo de tarefa baseado na presença de 'produtos'
+        is_order_task = hasattr(request, "produtos") and hasattr(request, "id_pedido")
 
-        # Enviar tarefa para processamento assíncrono
-        celery_task = execute_scraping.delay(task_data)
+        if is_order_task:
+            # TAREFA DE PEDIDO (Fase 3)
+            order_request = OrderRequest(**request.dict())
 
-        # Usar o ID do Celery para rastreamento
-        celery_task_id = celery_task.id
+            # Preparar dados para o Celery
+            task_data = {
+                "task_type": "order",
+                "usuario": order_request.usuario,
+                "senha": order_request.senha,
+                "id_pedido": order_request.id_pedido,
+                "produtos": [prod.dict() for prod in order_request.produtos],
+                "callback_url": order_request.callback_url,
+            }
 
-        # Criar resposta
-        response = ScrapingTaskResponse(
-            task_id=celery_task_id,
-            status="pending",
-            message="Tarefa de scraping criada com sucesso",
-            created_at=datetime.now(),
-            estimated_completion=None,
-        )
+            # Enviar tarefa de pedido para processamento assíncrono
+            celery_task = execute_order.delay(task_data)
+            celery_task_id = celery_task.id
+
+            # Criar resposta para pedido
+            response = OrderStatus(
+                task_id=celery_task_id,
+                status="pending",
+                progress=0.0,
+                message="Tarefa de pedido criada com sucesso",
+                created_at=datetime.now(),
+                started_at=None,
+                completed_at=None,
+                error=None,
+                result=None,
+            )
+
+        else:
+            # TAREFA DE SCRAPING (Fase 2)
+            scraping_request = ScrapingTaskRequest(**request.dict())
+
+            # Preparar dados para o Celery
+            task_data = {
+                "task_type": "scraping",
+                "usuario": scraping_request.usuario,
+                "senha": scraping_request.senha,
+                "callback_url": scraping_request.callback_url,
+            }
+
+            # Enviar tarefa para processamento assíncrono
+            celery_task = execute_scraping.delay(task_data)
+            celery_task_id = celery_task.id
+
+            # Criar resposta para scraping
+            response = ScrapingTaskResponse(
+                task_id=celery_task_id,
+                status="pending",
+                message="Tarefa de scraping criada com sucesso",
+                created_at=datetime.now(),
+                estimated_completion=None,
+            )
 
         return response
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Erro ao criar tarefa de scraping: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro ao criar tarefa: {str(e)}")
 
 
 @app.get("/scraping/{task_id}", response_model=ScrapingTaskStatus)
@@ -115,6 +156,9 @@ async def get_task_status(task_id: str):
             progress = 0.0
             message = "Status desconhecido"
 
+        # TODO: Detectar tipo de tarefa para retornar modelo correto
+        # Por enquanto, retornamos ScrapingTaskStatus para compatibilidade
+
         # Criar resposta de status
         response = ScrapingTaskStatus(
             task_id=task_id,
@@ -150,7 +194,8 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "service": "Servimed Scraping API",
+        "service": "Servimed Scraping & Orders API",
+        "phases": ["Fase 1: Scraping", "Fase 2: Filas", "Fase 3: Pedidos"],
     }
 
 
@@ -158,11 +203,15 @@ async def health_check():
 async def root():
     """Endpoint raiz da API."""
     return {
-        "message": "Servimed Scraping API - Fase 2",
-        "version": "1.0.0",
+        "message": "Servimed Scraping & Orders API - Fases 2 e 3",
+        "version": "2.0.0",
         "endpoints": {
-            "create_task": "POST /scraping",
+            "create_task": "POST /scraping (Scraping ou Pedido)",
             "check_status": "GET /scraping/{task_id}",
             "health": "GET /health",
+        },
+        "supported_tasks": {
+            "scraping": "Extração de produtos (Fase 2)",
+            "order": "Processamento de pedidos (Fase 3)",
         },
     }

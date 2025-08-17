@@ -52,7 +52,7 @@ def create_celery_app():
         "servimed",
         broker=CELERY_BROKER_URL,
         backend=CELERY_RESULT_BACKEND,
-        include=["tasks.scraping_tasks"],
+        include=["tasks.scraping_tasks", "tasks.order_tasks"],
     )
 
     # Aplicar configurações
