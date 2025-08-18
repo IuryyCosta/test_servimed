@@ -14,7 +14,7 @@ from pathlib import Path
 def start_celery_worker():
     """Inicia o worker Celery."""
     try:
-        print("👷 Iniciando Worker Celery com Redis emulado...")
+        print(" Iniciando Worker Celery com Redis emulado...")
 
         # Configurar variáveis de ambiente para fakeredis
         env = os.environ.copy()
@@ -34,45 +34,45 @@ def start_celery_worker():
             "--pool=solo",  # Usar pool solo para testes
         ]
 
-        print(f"🚀 Comando: {' '.join(cmd)}")
-        print("📍 Broker: memory:// (emulado)")
-        print("👥 Concorrência: 2 workers")
-        print("📝 Log Level: info")
-        print("💡 Usando pool solo para testes")
+        print(f" Comando: {' '.join(cmd)}")
+        print(" Broker: memory:// (emulado)")
+        print(" Concorrência: 2 workers")
+        print(" Log Level: info")
+        print(" Usando pool solo para testes")
         print("-" * 50)
 
         # Iniciar worker
         process = subprocess.Popen(cmd, env=env, cwd=Path(__file__).parent.parent)
 
-        print("✅ Worker Celery iniciado!")
-        print(f"🆔 PID: {process.pid}")
-        print("💡 Pressione Ctrl+C para parar")
+        print(" Worker Celery iniciado!")
+        print(f" PID: {process.pid}")
+        print(" Pressione Ctrl+C para parar")
 
         # Aguardar processo
         try:
             process.wait()
         except KeyboardInterrupt:
-            print("\n⏹️ Parando worker...")
+            print("\n Parando worker...")
             process.terminate()
             process.wait()
-            print("✅ Worker parado")
+            print(" Worker parado")
 
     except Exception as e:
-        print(f"❌ Erro ao iniciar worker: {e}")
+        print(f" Erro ao iniciar worker: {e}")
         return False
 
 
 def main():
     """Função principal."""
     print("=" * 50)
-    print("👷 INICIANDO WORKERS CELERY (REDIS EMULADO)")
+    print("INICIANDO WORKERS CELERY (REDIS EMULADO)")
     print("=" * 50)
 
-    print("📋 Pré-requisitos:")
-    print("   ✅ Redis emulado rodando")
-    print("   ✅ Dependências instaladas")
-    print("   ✅ Configuração Celery válida")
-    print("   ✅ fakeredis instalado")
+    print(" Pré-requisitos:")
+    print("    Redis emulado rodando")
+    print("    Dependências instaladas")
+    print("    Configuração Celery válida")
+    print("    fakeredis instalado")
     print("-" * 50)
 
     # Iniciar worker

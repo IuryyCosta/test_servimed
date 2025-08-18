@@ -17,7 +17,7 @@ def test_order_creation():
     """
     Testa criação de tarefa de pedido via API
     """
-    print("🧪 TESTE 1: Criação de Tarefa de Pedido")
+    print(" TESTE 1: Criação de Tarefa de Pedido")
     print("=" * 50)
 
     # Dados de teste para pedido
@@ -44,23 +44,23 @@ def test_order_creation():
             timeout=30,
         )
 
-        print(f"📊 Status Code: {response.status_code}")
+        print(f" Status Code: {response.status_code}")
 
         if response.status_code == 200:
             result = response.json()
-            print("✅ Tarefa de pedido criada com sucesso!")
-            print(f"🆔 Task ID: {result.get('task_id')}")
-            print(f"📝 Status: {result.get('status')}")
-            print(f"💬 Mensagem: {result.get('message')}")
+            print(" Tarefa de pedido criada com sucesso!")
+            print(f" Task ID: {result.get('task_id')}")
+            print(f" Status: {result.get('status')}")
+            print(f" Mensagem: {result.get('message')}")
 
             return result.get("task_id")
         else:
-            print(f"❌ Erro ao criar tarefa: {response.status_code}")
-            print(f"📄 Resposta: {response.text}")
+            print(f" Erro ao criar tarefa: {response.status_code}")
+            print(f" Resposta: {response.text}")
             return None
 
     except Exception as e:
-        print(f"❌ Erro na requisição: {str(e)}")
+        print(f" Erro na requisição: {str(e)}")
         return None
 
 

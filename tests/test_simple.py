@@ -3,7 +3,7 @@ Teste simples para demonstrar que o sistema de testes está funcionando.
 """
 
 import pytest
-from models.order import ProductItem
+from servimed.models.order import ProductItem
 
 
 def test_simple_product_creation():

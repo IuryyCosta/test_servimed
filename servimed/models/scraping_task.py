@@ -14,8 +14,6 @@ from pydantic import BaseModel, Field, validator
 
 class ScrapingTaskRequest(BaseModel):
     """
-    Modelo para requisição de tarefa de scraping.
-    
     Estrutura enviada pelo cliente para criar uma nova tarefa.
     """
     

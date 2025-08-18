@@ -1,6 +1,4 @@
 """
-API FastAPI para gerenciamento de tarefas de scraping e pedidos - Fases 2 e 3.
-
 Esta API recebe requisições de scraping e pedidos, enviando-as para processamento
 assíncrono via Celery workers com detecção automática do tipo de tarefa.
 """
@@ -156,8 +154,6 @@ async def get_task_status(task_id: str):
             progress = 0.0
             message = "Status desconhecido"
 
-        # TODO: Detectar tipo de tarefa para retornar modelo correto
-        # Por enquanto, retornamos ScrapingTaskStatus para compatibilidade
 
         # Criar resposta de status
         response = ScrapingTaskStatus(

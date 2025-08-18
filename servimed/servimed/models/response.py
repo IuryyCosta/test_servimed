@@ -1,10 +1,5 @@
 """
 Modelos de dados para respostas da API.
-
-Este módulo define estruturas para:
-- Respostas genéricas da API
-- Tratamento de erros
-- Respostas de sucesso
 """
 
 from typing import Optional, Any, Dict

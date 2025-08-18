@@ -1,10 +1,5 @@
 """
 Modelos de dados para autenticação OAuth2.
-
-Este módulo define as estruturas de dados para:
-- Credenciais de login
-- Tokens de acesso
-- Respostas de autenticação
 """
 
 from typing import Optional

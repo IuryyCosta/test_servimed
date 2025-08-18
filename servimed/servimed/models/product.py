@@ -1,6 +1,4 @@
 """
-Modelo de dados para produtos do Servimed.
-
 Este módulo define a estrutura de dados para produtos extraídos
 da API, incluindo validação e serialização automática.
 """
@@ -11,9 +9,6 @@ from pydantic import BaseModel, Field, validator
 class Product(BaseModel):
     """
     Modelo de dados para produtos do Servimed.
-
-    Representa a estrutura retornada pelo endpoint /produto
-    com validação automática de tipos e formatos.
     """
 
     id: int = Field(..., description="ID único do produto")
