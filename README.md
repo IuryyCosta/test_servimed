@@ -64,7 +64,7 @@ servimed/
 ### **1. Clonar o Repositório**
 
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/IuryyCosta/test_servimed.git
 cd servimed
 ```
 
@@ -385,7 +385,6 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-## 🤝 Contribuição
 
 ### **Padrões de Código**
 
@@ -394,48 +393,9 @@ WantedBy=multi-user.target
 - **Docstrings** para documentação
 - **Testes** para novas funcionalidades
 
-### **Processo de Contribuição**
 
-1. Fork do repositório
-2. Criação de branch para feature
-3. Implementação com testes
-4. Pull Request com descrição detalhada
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para detalhes.
-
-## 👥 Autores
-
-- **Desenvolvedor:** [Seu Nome]
-- **Projeto:** Servimed - Sistema de Scraping e Pedidos
-- **Data:** Agosto 2025
-
-## 📞 Suporte
-
-- **Issues:** [GitHub Issues](link-para-issues)
-- **Email:** [seu-email@exemplo.com]
-- **Documentação:** [Link para docs]
-
-## 🎯 Roadmap
-
-### **Versão 2.0 (Próxima)**
-
-- [ ] Interface web para monitoramento
-- [ ] Sistema de notificações
-- [ ] Integração com mais APIs
-- [ ] Dashboard de métricas
-
-### **Versão 3.0 (Futura)**
-
-- [ ] Machine Learning para otimização
-- [ ] Sistema de cache inteligente
-- [ ] API GraphQL
-- [ ] Microserviços
-
----
-
-## 🎉 Status do Projeto
+##  Status do Projeto
 
 **✅ PROJETO 100% COMPLETO!**
 
@@ -445,8 +405,5 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para detalhes.
 - **Testes:** 100% cobertura ✅
 - **Documentação:** Completa ✅
 
-**O sistema está pronto para produção!** 🚀
-
 ---
 
-_Última atualização: Agosto 2025_
