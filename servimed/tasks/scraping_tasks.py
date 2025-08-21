@@ -11,7 +11,7 @@ import requests
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from queues.celery_config import celery_app
+from celery_app import celery_app
 from models.scraping_task import ScrapingResult
 from servimed.config import get_config
 

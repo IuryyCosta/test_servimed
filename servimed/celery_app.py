@@ -13,7 +13,7 @@ celery_app = Celery(
     "servimed",
     broker=CELERY_BROKER_URL,
     include=["tasks.scraping_tasks", "tasks.order_tasks"],
-)
+) 
 
 # Configurações 
 celery_app.conf.update(
